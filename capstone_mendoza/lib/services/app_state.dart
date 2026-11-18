@@ -36,4 +36,11 @@ class AppState extends ChangeNotifier {
     s.present = !s.present;
     notifyListeners();
   }
+
+  void resetAll() {
+  for (final s in students) {
+    s.present = false;
+  }
+  notifyListeners();
+}
 }

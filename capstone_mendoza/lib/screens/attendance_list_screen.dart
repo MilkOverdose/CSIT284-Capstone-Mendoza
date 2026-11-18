@@ -7,7 +7,16 @@ class AttendanceListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Attendance List')),
+      appBar: AppBar(title: const Text('Attendance List'),
+      actions: [
+      IconButton(
+        icon: const Icon(Icons.refresh),
+        tooltip: 'Reset all',
+        onPressed: () => AppState.I.resetAll(),
+      ),
+    ],
+    ),
+  
       body: ListenableBuilder(
         listenable: AppState.I,
         builder: (context, _) {
