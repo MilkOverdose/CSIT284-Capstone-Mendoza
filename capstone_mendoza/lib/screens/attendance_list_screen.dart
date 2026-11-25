@@ -26,8 +26,10 @@ class AttendanceListScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.person_add),
-        onPressed: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AddEditStudentScreen())),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddEditStudentScreen()),
+        ),
       ),
       body: StreamBuilder<List<Student>>(
         stream: firestoreService.streamStudents(),
@@ -41,18 +43,24 @@ class AttendanceListScreen extends StatelessWidget {
           final students = snap.data!;
           if (students.isEmpty) {
             return const Center(
-                child: Text('No students yet. Tap the cloud icon to load dummy data.'));
+              child: Text(
+                'No students yet. Tap the cloud icon to load dummy data.',
+              ),
+            );
           }
           final present = students.where((s) => s.present).length;
           return Column(
             children: [
               Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text('Present: $present / ${students.length}',
-                    style: Theme.of(context).textTheme.titleMedium),
+                child: Text(
+                  'Present: $present / ${students.length}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ),
               Expanded(
                 child: ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 88),
                   itemCount: students.length,
                   itemBuilder: (_, i) {
                     final s = students[i];
@@ -63,14 +71,17 @@ class AttendanceListScreen extends StatelessWidget {
                       ),
                       title: Text(s.name),
                       subtitle: Text(s.id),
-                      onTap: () => firestoreService.setPresent(s.id, !s.present),
+                      onTap: () =>
+                          firestoreService.setPresent(s.id, !s.present),
                       trailing: PopupMenuButton<String>(
                         onSelected: (v) {
                           if (v == 'edit') {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => AddEditStudentScreen(student: s)),
+                                builder: (_) =>
+                                    AddEditStudentScreen(student: s),
+                              ),
                             );
                           } else {
                             firestoreService.deleteStudent(s.id);
