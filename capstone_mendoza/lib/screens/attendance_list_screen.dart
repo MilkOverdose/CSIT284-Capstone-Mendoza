@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:capstone_mendoza/services/app_state.dart';
+import '../models/student.dart';
+import '../services/firestore_service.dart';
+import 'add_edit_student_screen.dart';
 
 class AttendanceListScreen extends StatelessWidget {
   const AttendanceListScreen({super.key});
@@ -7,26 +9,47 @@ class AttendanceListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Attendance List'),
-      actions: [
-      IconButton(
-        icon: const Icon(Icons.refresh),
-        tooltip: 'Reset all',
-        onPressed: () => AppState.I.resetAll(),
+      appBar: AppBar(
+        title: const Text('Attendance List'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.cloud_upload),
+            tooltip: 'Load dummy students',
+            onPressed: () => firestoreService.seedDummyData(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Reset all',
+            onPressed: () => firestoreService.resetAll(),
+          ),
+        ],
       ),
-    ],
-    ),
-  
-      body: ListenableBuilder(
-        listenable: AppState.I,
-        builder: (context, _) {
-          final students = AppState.I.students;
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.person_add),
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AddEditStudentScreen())),
+      ),
+      body: StreamBuilder<List<Student>>(
+        stream: firestoreService.streamStudents(),
+        builder: (context, snap) {
+          if (snap.hasError) {
+            return Center(child: Text('Error: ${snap.error}'));
+          }
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final students = snap.data!;
+          if (students.isEmpty) {
+            return const Center(
+                child: Text('No students yet. Tap the cloud icon to load dummy data.'));
+          }
           final present = students.where((s) => s.present).length;
           return Column(
             children: [
               Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text('Present: $present / ${students.length}'),
+                child: Text('Present: $present / ${students.length}',
+                    style: Theme.of(context).textTheme.titleMedium),
               ),
               Expanded(
                 child: ListView.builder(
@@ -40,17 +63,26 @@ class AttendanceListScreen extends StatelessWidget {
                       ),
                       title: Text(s.name),
                       subtitle: Text(s.id),
-                      trailing: Text(s.present ? 'Present' : 'Absent'),
-                      onTap: () => AppState.I.toggle(s),
+                      onTap: () => firestoreService.setPresent(s.id, !s.present),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (v) {
+                          if (v == 'edit') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => AddEditStudentScreen(student: s)),
+                            );
+                          } else {
+                            firestoreService.deleteStudent(s.id);
+                          }
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(value: 'edit', child: Text('Edit')),
+                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        ],
+                      ),
                     );
                   },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Back'),
                 ),
               ),
             ],
